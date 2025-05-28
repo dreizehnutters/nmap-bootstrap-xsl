@@ -2,217 +2,170 @@
 <!--
 Nmap Bootstrap XSL
 This software must not be used by military or secret service organisations.
-Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd)
+Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
 -->
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:key name="serviceGroup" match="host/ports/port[state/@state='open'][service/@name and service/@conf &gt; 5]" use="concat(service/@name, '-', @protocol)"/>
+  <xsl:key name="uniquePorts" match="port[state/@state='open']" use="@portid"/>
   <xsl:output method="html" encoding="utf-8" indent="yes" doctype-system="about:legacy-compat"/>
   <xsl:template match="/">
     <html lang="en">
       <head>
-        <meta name="referrer" content="no-referrer"/> 
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"/>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"/>
-        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.0.1/css/buttons.dataTables.min.css" integrity="sha384-0OeHd2TJxoSDnW9bOIukOL7+BcfI6b17OHv54+JWrUbWq7ABgBO0rjW3OinB5vbG" crossorigin="anonymous"/>
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css" type="text/css" integrity="sha384-VEpVDzPR2x8NbTDZ8NFW4AWbtT2g/ollEzX/daZdW/YvUBlbgVtsxMftnJ84k0Cn" crossorigin="anonymous"/>
-
-        <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha384-fJU6sGmyn07b+uD1nMk7/iSb4yvaowcueiQhfVgQuD98rfva8mcr1eSvjchfpMrH" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js" integrity="sha384-rgWRqC0OFPisxlUvl332tiM/qmaNxnlY46eksSZD84t+s2vZlqGeHrncwIRX7CGp" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js" integrity="sha384-v9EFJbsxLXyYar8TvBV8zu5USBoaOC+ZB57GzCmQiWfgDIjS+wANZMP5gjwMLwGv" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js" integrity="sha384-HUHsYVOhSyHyZRTWv8zkbKVk7Xmg12CCNfKEUJ7cSuW/22Lz3BITd3Om6QeiXICb" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js" integrity="sha384-UAA3vlTPq9dwxB61awBFhR7Y5uBFOKQWuZueu4C6uI48gjIoqI/OTmYWEYWZXbGR" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js" integrity="sha384-MGimb05YiSGNcXiLlj03UNahXBECHmFTe5iVBqh6sf2G7ccabI3/EOqzBnNw97/T" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js" integrity="sha384-pp2ArcKo71umWphZ7QCCjQbnICkbOkLF88ZeoeZDPbqdAVvxZlcrla3lyT7pY/ue" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.colVis.min.js" integrity="sha384-enGTgEZOvC7C8P91Jt/27n1V3xD5SIzGi1e+DzYJvAts546YTsj3CNmnL0G/zlVn" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.bootstrap.min.js" integrity="sha384-Ndtz/aMKkdc9b0uTCirKXA6kJ8QfBTv73Ph9sv0wOiqK7NENdLN+qTpPX5skuhiM" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js" integrity="sha384-7PXRkl4YJnEpP8uU4ev9652TTZSxrqC8uOpcV1ftVEC7LVyLZqqDUAaq+Y+lGgr9" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/plug-ins/2.1.0/sorting/ip-address.js" integrity="sha384-pbrITLqgA4lSZJgcYMK/c5hfUpOg+2vjjMQPdRv4hPEoBFYVWEuF1H3faZskzO9a" crossorigin="anonymous"></script>
-        <style>
-
-          .target:before {
-            content: "";
-            display: block;
-            height: 50px;
-            margin: -20px 0 0;
-          }
-          @media only screen and (min-width:1900px) {
-            .container {
-              width: 1800px;
-              }
-          }
-          .footer {
-            margin-top:60px;
-            padding-top:45px;
-            width: 100%;
-            height: 180px;
-            background-color: #f5f5f5;
-          }
-          .clickable {
-            cursor: pointer;
-          }
-          .panel-heading > h3:before {
-            font-family: 'Glyphicons Halflings';
-            content: "\e114"; /* glyphicon-chevron-down */
-            padding-right: 1em;
-          }
-          .panel-heading.collapsed > h3:before {
-            content: "\e080"; /* glyphicon-chevron-right */
-          }
-        </style>
-        <title>Nmap Results</title>
+        <meta name="referrer" content="no-referrer"/>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.1/b-3.2.3/b-colvis-3.2.3/b-html5-3.2.3/b-print-3.2.3/fh-4.0.2/datatables.min.css" rel="stylesheet" integrity="sha384-npHSxFxHOYzZ5rh7dTSWQz9iiFPD5EpGhraeLyrNOwAtnwNrZfEbDcA4aFwnYQKL" crossorigin="anonymous"/>
+        <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.1/b-3.2.3/b-colvis-3.2.3/b-html5-3.2.3/b-print-3.2.3/fh-4.0.2/datatables.min.js" integrity="sha384-AG5MJFbmBt6aryW6LS46cM1vt7UNBHkLZiCWbnKHdW3B+a3iZjlcZybzBx57ayaY" crossorigin="anonymous"/>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"/>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.bundle.min.js" integrity="sha384-mZ3q69BYmd4GxHp59G3RrsaFdWDxVSoqd7oVYuWRm2qiXrduT63lQtlhdD9lKbm3" crossorigin="anonymous"/>
+        <title>Company XYZ | Nmap Results</title>
       </head>
       <body>
-        <script>
-          function highlight(){
-              $("#table-services").dataTable().fnDestroy()
-              let keywords = document.getElementById('keyword-input').value.split(',');
-              let content = document.getElementById('table-services').innerHTML;
-              document.getElementById('table-services').innerHTML = transformContent(content, keywords)
-              $('#table-services').DataTable( {
-              "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-              "order": [[ 0, 'desc' ]],
-              "columnDefs": [
-                { "targets": [0], "orderable": true },
-              ],
-              dom:'lBfrtip', 
-              stateSave: true,
-              buttons: [
-                  {
-                      extend: 'copyHtml5',
-                      exportOptions: { orthogonal: 'export' }
-                  },
-                  {
-                      extend: 'csvHtml5',
-                      exportOptions: { orthogonal: 'export' }
-                  },
-                  {
-                      extend: 'excelHtml5',
-                      exportOptions: { orthogonal: 'export' },
-                      autoFilter: true,
-                      title: '',
-                  },
-                  {
-                      extend: 'pdfHtml5',
-                      exportOptions: { orthogonal: 'export' },
-                      orientation: 'landscape',
-                      pageSize: 'LEGAL',
-                      download: 'open',
-                      exportOptions: {
-                      columns: [ 0,1,2,3,4,5,6,7,8 ]
-                }
-                  }
-              ],
-            });
-          }
-
-          function transformContent(content, keywords){
-            let temp = content
-
-            keywords.forEach(keyword => {
-              temp = temp.replace(new RegExp(keyword, 'ig'), wrapKeywordWithHTML(keyword, keyword))
-            })
-
-            return temp
-          }
-
-          function wrapKeywordWithHTML(keyword, url){
-            return `<span style="color: red;">${keyword}</span>`
-          }
-        </script>
-        <nav class="navbar navbar-default navbar-fixed-top">
+        <nav id="mainNavbar" class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
           <div class="container-fluid">
-            <div class="navbar-header">
-              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-              </button>
-              <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-home"></span></a>
-            </div>
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-              <ul class="nav navbar-nav">
-                <li><a href="#scannedhosts">Scanned Hosts</a></li>
-                <li><a href="#openservices">Open Services</a></li>
-                <li><a href="#webservices">Web Services</a></li>
-                <li><a href="#onlinehosts">Online Hosts</a></li>
-                <li><a href="#" style="pointer-events: none; cursor: default;">|</a></li>
-                <li><a href="https://www.pentestfactory.de/schwachstellendatenbank/" target="_blank" title="Vulnerability Database by Pentest Factory"><span class="glyphicon glyphicon-new-window " style="color: #f7a90a;"></span> CVEs</a></li>
-                <li><a href="https://www.ssllabs.com/ssltest/" target="_blank" title="SSL Server Test by Qualys"><span class="glyphicon glyphicon-new-window" style="color: #de1d0b;"></span> SSL/TLS</a></li>
-                <li><a href="https://securityheaders.com/" target="_blank" title="HTTP Header Test by Scott Helme"><span class="glyphicon glyphicon-new-window" style="color: #3a71d8;"></span> Headers</a></li>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"/>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                  <a class="nav-link" href="#scannedhosts">Scanned Hosts</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#openservices">Open Services</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#webservices">Web Services</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#onlinehosts">Online Hosts</a>
+                </li>
+              </ul>
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                  <a class="nav-link" href="https://TODO.com/pentest">
+                    <img src="data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7" alt="Company XYZ" style="max-height: 40px; width: auto;"/>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
         </nav>
-        <div class="container" style="width: 94%">
-          <div class="jumbotron" style="margin-top: 80px; padding-top: 5px; padding-bottom: 30px; padding-left: 30px; padding-right: 30px">
-            <h2>Nmap Port Scanning Results</h2>
-            <h2><small>Nmap Version <xsl:value-of select="/nmaprun/@version"/>
-            <br/><xsl:value-of select="/nmaprun/@startstr"/> – <xsl:value-of select="/nmaprun/runstats/finished/@timestr"/></small></h2>
-            <pre style="white-space:pre-wrap; word-wrap:break-word;"><a target="_blank"><xsl:attribute name="href">https://explainshell.com/explain?cmd=<xsl:value-of select="/nmaprun/@args"/></xsl:attribute><xsl:value-of select="/nmaprun/@args"/></a></pre>
-            <p class="lead">
-              <xsl:value-of select="/nmaprun/runstats/hosts/@total"/> hosts scanned.
-              <xsl:value-of select="/nmaprun/runstats/hosts/@up"/> hosts up.
-              <xsl:value-of select="/nmaprun/runstats/hosts/@down"/> hosts down.
-            </p>
+        <div class="container" style="min-width: fit-content; margin-left: 5%; margin-right: 5%;">
+          <div id="jumbotron-container" class="bg-light p-4 rounded my-5 shadow-sm">
+            <h2 class="display-6 text-primary">Port Scanning Results</h2>
+            <h5 class="mb-3">
+              <small class="text-muted">
+                Nmap Version: <xsl:value-of select="/nmaprun/@version"/> <br/>
+                Scan Duration: <xsl:value-of select="/nmaprun/@startstr"/> - <xsl:value-of select="/nmaprun/runstats/finished/@timestr"/>
+              </small>
+            </h5>
+            <pre class="border rounded bg-white p-3 overflow-auto" style="white-space: pre-wrap; word-wrap: break-word;">
+              <xsl:attribute name="text">
+                <xsl:value-of select="/nmaprun/@args"/>
+              </xsl:attribute>
+              <xsl:value-of select="/nmaprun/@args"/>
+            </pre>
+            <div class="d-flex gap-3 my-3">
+              <p class="mb-0">
+                <b class="badge bg-info p-2"><xsl:value-of select="/nmaprun/runstats/hosts/@up"/> Hosts scanned</b>
+              </p>
+            </div>
             <div class="progress">
-              <div class="progress-bar progress-bar-success" style="width: 0%">
-                <xsl:attribute name="style">width:<xsl:value-of select="/nmaprun/runstats/hosts/@up div /nmaprun/runstats/hosts/@total * 100"/>%;</xsl:attribute>
-                <xsl:value-of select="/nmaprun/runstats/hosts/@up"/>
-                <span class="sr-only"></span>
-              </div>
-              <div class="progress-bar progress-bar-danger" style="width: 0%">
-                <xsl:attribute name="style">width:<xsl:value-of select="/nmaprun/runstats/hosts/@down div /nmaprun/runstats/hosts/@total * 100"/>%;</xsl:attribute>
-                <xsl:value-of select="/nmaprun/runstats/hosts/@down"/>
-                <span class="sr-only"></span>
-              </div>
-              </div>
-              <div id="form-wrapper">
-                <div>
-                    <textarea style="width: 100%;" title="Insert comma separated keywords to be highlighted" rows = "1" name = "keywords" placeholder="sha1,password,..." id="keyword-input">sha1,login,password,md5</textarea>
-                </div>
-                <div style="margin-top: 2px">
-                    <button title="Keyword highlighing in 'Open Services'" id="highlight-button" onclick="highlight()">Highlight Keywords</button>
-                    <button title="Reset keyword highlighing" id="reset-highlight-button" onclick="document.location.reload(true);">Reset</button>
-                </div>
-                <div style="margin-top: 25px" id="credits">
-                  <div><span class="glyphicon glyphicon-heart" style="color: #de1d0b;padding-right: 5px"></span><a href="https://github.com/Haxxnet/nmap-bootstrap-xsl">Nmap Bootstrap XSL</a> by <a href="https://github.com/l4rm4nd">LRVT</a></div>
-                </div>
+              <div class="progress-bar bg-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"><xsl:attribute name="style">width:<xsl:value-of select="/nmaprun/runstats/hosts/@up div /nmaprun/runstats/hosts/@total * 100"/>%;</xsl:attribute><xsl:value-of select="/nmaprun/runstats/hosts/@up"/> Hosts up</div>
+              <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"><xsl:attribute name="style">width:<xsl:value-of select="/nmaprun/runstats/hosts/@down div /nmaprun/runstats/hosts/@total * 100"/>%;</xsl:attribute><xsl:value-of select="/nmaprun/runstats/hosts/@down"/> Hosts down</div>
             </div>
           </div>
-          <h2 id="scannedhosts" class="target">Scanned Hosts<xsl:if test="/nmaprun/runstats/hosts/@down > 1024"><small> (offline hosts are hidden)</small></xsl:if></h2>
+          
+          <h2 id="scannedhosts" class="fs-4 mt-5 mb-3 bg-light p-3 rounded">Scanned Hosts <xsl:if test="/nmaprun/runstats/hosts/@down &gt; 1024"><small class="text-muted">(offline hosts are hidden)</small></xsl:if></h2>
           <div class="table-responsive">
-            <table id="table-overview" class="table table-striped dataTable" role="grid">
-              <thead>
+            <table id="table-overview" class="table table-striped table-hover align-middle" role="grid">
+              <thead class="table-light">
                 <tr>
-                  <th>State</th>
-                  <th>Address</th>
-                  <th>Hostname</th>
-                  <th>TCP (open)</th>
-                  <th>UDP (open)</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Mac</th>
+                  <th scope="col">Vendor</th>
+                  <th scope="col">OS</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Hostname</th>
+                  <th scope="col">#Open TCP Ports</th>
+                  <th scope="col">#Open UDP Ports</th>
                 </tr>
               </thead>
               <tbody>
                 <xsl:choose>
-                  <xsl:when test="/nmaprun/runstats/hosts/@down > 1024">
+                  <xsl:when test="/nmaprun/runstats/hosts/@down &gt; 1024">
                     <xsl:for-each select="/nmaprun/host[status/@state='up']">
                       <tr>
-                        <td><span class="label label-danger"><xsl:if test="status/@state='up'"><xsl:attribute name="class">label label-success</xsl:attribute></xsl:if><xsl:value-of select="status/@state"/></span></td>
-                        <td><a><xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute><xsl:value-of select="address/@addr"/></a></td>
-                        <td><xsl:value-of select="hostnames/hostname/@name"/></td>
-                        <td><xsl:value-of select="count(ports/port[state/@state='open' and @protocol='tcp'])"/></td>
-                        <td><xsl:value-of select="count(ports/port[state/@state='open' and @protocol='udp'])"/></td>
+                        <td>
+                          <span class="badge bg-danger">
+                            <xsl:if test="status/@state='up'">
+                              <xsl:attribute name="class">badge bg-success</xsl:attribute>
+                            </xsl:if>
+                            <xsl:value-of select="status/@state"/>
+                          </span>
+                        </td>
+                        <td>
+                          <xsl:value-of select="address[@addrtype='mac']/@addr"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="address[@addrtype='mac']/@vendor"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="os/osmatch[1]/@name"/>
+                        </td>
+                        <td>
+                          <a>
+                            <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(address[@addrtype='ipv4']/@addr, '.', '-')"/></xsl:attribute>
+                            <xsl:value-of select="address[@addrtype='ipv4']/@addr"/>
+                          </a>
+                        </td>
+                        <td>
+                          <xsl:value-of select="hostnames/hostname/@name"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="count(ports/port[state/@state='open' and @protocol='tcp'])"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="count(ports/port[state/@state='open' and @protocol='udp'])"/>
+                        </td>
                       </tr>
                     </xsl:for-each>
                   </xsl:when>
                   <xsl:otherwise>
                     <xsl:for-each select="/nmaprun/host">
                       <tr>
-                        <td><span class="label label-danger"><xsl:if test="status/@state='up'"><xsl:attribute name="class">label label-success</xsl:attribute></xsl:if><xsl:value-of select="status/@state"/></span></td>
-                        <td><a><xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute><xsl:value-of select="address/@addr"/></a></td>
-                        <td><xsl:value-of select="hostnames/hostname/@name"/></td>
-                        <td><xsl:value-of select="count(ports/port[state/@state='open' and @protocol='tcp'])"/></td>
-                        <td><xsl:value-of select="count(ports/port[state/@state='open' and @protocol='udp'])"/></td>
+                        <td>
+                          <span class="badge bg-danger">
+                            <xsl:if test="status/@state='up'">
+                              <xsl:attribute name="class">badge bg-success</xsl:attribute>
+                            </xsl:if>
+                            <xsl:value-of select="status/@state"/>
+                          </span>
+                        </td>
+                        <td>
+                          <xsl:value-of select="address[@addrtype='mac']/@addr"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="address[@addrtype='mac']/@vendor"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="os/osmatch[1]/@name"/>
+                        </td>
+                        <td>
+                          <a>
+                            <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(address[@addrtype='ipv4']/@addr, '.', '-')"/></xsl:attribute>
+                            <xsl:value-of select="address[@addrtype='ipv4']/@addr"/>
+                          </a>
+                        </td>
+                        <td>
+                          <xsl:value-of select="hostnames/hostname/@name"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="count(ports/port[state/@state='open' and @protocol='tcp'])"/>
+                        </td>
+                        <td>
+                          <xsl:value-of select="count(ports/port[state/@state='open' and @protocol='udp'])"/>
+                        </td>
                       </tr>
                     </xsl:for-each>
                   </xsl:otherwise>
@@ -220,349 +173,586 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd)
               </tbody>
             </table>
           </div>
-          <h2 id="openservices" class="target">Open Services</h2>
+          
+          <hr class="my-4"/>
+          <h2 id="openservices" class="fs-4 mt-5 mb-3 bg-light p-3 rounded">Open Services</h2>
+          <div class="my-4 row" style="margin: 20px 0;">
+            <div id="serviceCounts" class="d-none">
+              <xsl:for-each select="//port[state/@state='open']/service[@name and @conf &gt; 5]">
+                <span class="service" data-service="{@name}"/>
+              </xsl:for-each>
+            </div>
+            <div id="flex-container" class="d-flex flex-wrap gap-4 align-items-start">
+              <div class="chart-container" style="flex: 1; max-width: 70%;">
+                <canvas id="servicePieChart"/>
+              </div>
+              <div class="list-container">
+                <h3 class="fs-5 mb-3">Top 5 Services</h3>
+                <ul id="topServicesLedger" class="list-group" style="font-size: 16px; color: #333; font-weight: bold;">
+                </ul>
+              </div>
+            </div>
+          </div>
           <div class="table-responsive">
-            <table id="table-services" class="table table-striped dataTable" role="grid">
-              <thead >
+            <table id="table-services" class="table table-striped table-hover align-middle" role="grid">
+              <thead class="table-light">
                 <tr>
-                  <!--<th title="Temporary Checkbox"></th>-->
-                  <th>Hostname</th>
-                  <th>Address</th>
-                  <th>Port</th>
-                  <th>Protocol</th>
-                  <th>Service</th>
-                  <th>Product</th>
-                  <th>Version</th>
-                  <th>Extra</th>
-                  <th>SSL Certificate</th>
-                  <th title="Title of HTTP services">Title</th>
-                  <th>CPE</th>
+                  <th scope="col">Hostname</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Port</th>
+                  <th scope="col">Protocol</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Version</th>
+                  <th scope="col">Extra</th>
+                  <th scope="col">Tunnel</th>
+                  <th scope="col">CPE</th>
                 </tr>
               </thead>
               <tbody>
                 <xsl:for-each select="/nmaprun/host">
                   <xsl:for-each select="ports/port[state/@state='open']">
                     <tr>
-                      <!--<td><input name="select_all" value="1" type="checkbox"></input></td>-->
                       <td>
-                      <xsl:if test="count(../../hostnames/hostname) = 0">N/A</xsl:if>
-                      <xsl:if test="count(../../hostnames/hostname) > 0"><xsl:value-of select="../../hostnames/hostname/@name"/></xsl:if></td>
-                      <td><a>
-                      <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/></xsl:attribute><xsl:value-of select="../../address/@addr"/></a></td>
-                      
-                      <td><a>
-                      <xsl:attribute name="href">#port-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/>-<xsl:value-of select="@portid"/></xsl:attribute><xsl:value-of select="@portid"/></a></td>
-                      <td><xsl:value-of select="@protocol"/></td>
-                      <td><xsl:if test="count(service/@tunnel) > 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if><xsl:value-of select="service/@name"/></td>
-                      <td><xsl:value-of select="service/@product"/></td>
-                      <td><xsl:value-of select="service/@version"/></td>
-                      <td><xsl:value-of select="service/@extrainfo"/></td>
-                      <td>
-                        <xsl:if test="count(script/table[@key='subject']/elem[@key='commonName']) > 0">CN: <i><xsl:value-of select="script/table[@key='subject']/elem[@key='commonName']"/></i></xsl:if>
-                        <xsl:if test="count(script/table[@key='validity']/elem[@key='notAfter']) > 0"><br/>Expiry: <i><xsl:value-of select="script/table[@key='validity']/elem[@key='notAfter']"/></i></xsl:if>
-                        <xsl:if test="count(script/elem[@key='sig_algo']) > 0"><br/>SigAlgo: <i><xsl:value-of select="script/elem[@key='sig_algo']"/></i></xsl:if>
+                        <xsl:if test="count(../../hostnames/hostname) = 0">N/A</xsl:if>
+                        <xsl:if test="count(../../hostnames/hostname) &gt; 0">
+                          <xsl:value-of select="../../hostnames/hostname/@name"/>
+                        </xsl:if>
                       </td>
-                      <td><xsl:choose><xsl:when test="count(script[@id='http-title']/elem[@key='title']) > 0"><i><xsl:value-of select="script[@id='http-title']/elem[@key='title']"/></i></xsl:when><xsl:otherwise><xsl:if test="count(script[@id='http-title']/@output) > 0"><i><xsl:value-of select="script[@id='http-title']/@output"/></i></xsl:if></xsl:otherwise></xsl:choose></td>
-                      <td><xsl:value-of select="service/cpe"/></td>
+                      <td>
+                        <a href="#">
+                          <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/></xsl:attribute>
+                          <xsl:value-of select="../../address/@addr"/>
+                        </a>
+                      </td>
+                      <td>
+                        <xsl:value-of select="@portid"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="@protocol"/>
+                      </td>
+                      <td>
+                        <xsl:if test="count(service/@tunnel) &gt; 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if>
+                        <xsl:if test="number(service/@conf) &gt; 5">
+                          <xsl:value-of select="service/@name"/>
+                        </xsl:if>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@product"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@version"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@extrainfo"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@tunnel"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/cpe"/>
+                      </td>
                     </tr>
                   </xsl:for-each>
                 </xsl:for-each>
               </tbody>
             </table>
           </div>
-
-          <h2 id="webservices" class="target">Web Services</h2>
+          
+          <hr class="my-4"/>
+          <h2 id="serviceinventory" class="fs-4 mt-5 mb-3 bg-light p-3 rounded">Service Inventory</h2>
           <div class="table-responsive">
-            <table id="web-services" class="table table-striped dataTable" role="grid">
-              <thead >
+            <table id="service-inventory" class="table table-striped table-hover table-bordered dataTable align-middle" role="grid">
+              <thead class="table-light">
                 <tr>
-                  <!--<th title="Temporary Checkbox"></th>-->
-                  <th>Hostname</th>
-                  <th>Address</th>
-                  <th>Port</th>
-                  <th>Service</th>
-                  <th>Produkt</th>
-                  <th>Version</th>
-                  <th>Title</th>
-                  <th>SSL Certificate</th>
-                  <th>URL</th>
+                  <th scope="col">Service Name</th>
+                  <th scope="col">Ports</th>
+                  <th scope="col">Protocol</th>
+                  <th scope="col">Hosts</th>
+                </tr>
+              </thead>
+              <tbody>
+                <xsl:for-each select="/nmaprun/host/ports/port[state/@state='open'][service/@name][generate-id() = generate-id(key('serviceGroup', concat(service/@name, '-', @protocol))[1])]">
+                  <xsl:variable name="svcName" select="service/@name"/>
+                  <xsl:variable name="proto" select="@protocol"/>
+                  <xsl:variable name="svcKey" select="concat($svcName, '-', $proto)"/>
+                  <tr>
+                    <td>
+                      <xsl:value-of select="$svcName"/>
+                    </td>
+                    <td>
+                      <xsl:for-each select="/nmaprun/host/ports/port[state/@state='open'][service/@name = $svcName and @protocol = $proto][generate-id() = generate-id(key('uniquePorts', @portid)[1])]">
+                        <xsl:sort select="@portid" data-type="number"/>
+                        <xsl:value-of select="@portid"/>
+                        <xsl:if test="position() != last()">, </xsl:if>
+                      </xsl:for-each>
+                    </td>
+                    <td>
+                      <xsl:value-of select="$proto"/>
+                    </td>
+                    <td>
+                      <xsl:for-each select="/nmaprun/host[ports/port[state/@state='open'][service/@name = $svcName and @protocol = $proto]]">
+                        <xsl:sort select="address[@addrtype='ipv4']/@addr"/>
+                        <a>
+                          <xsl:attribute name="href">
+                            <xsl:text>#onlinehosts-</xsl:text>
+                            <xsl:value-of select="translate(address[@addrtype='ipv4']/@addr, '.', '-')"/>
+                          </xsl:attribute>
+                          <xsl:value-of select="address[@addrtype='ipv4']/@addr"/>
+                        </a>
+                        <xsl:if test="hostnames/hostname">
+                          <xsl:text> (</xsl:text>
+                          <xsl:value-of select="hostnames/hostname/@name"/>
+                          <xsl:text>)</xsl:text>
+                        </xsl:if>
+                        <xsl:if test="position() != last()">, </xsl:if>
+                      </xsl:for-each>
+                    </td>
+                  </tr>
+                </xsl:for-each>
+              </tbody>
+            </table>
+          </div>
+          
+          <hr class="my-4"/>
+          <h2 id="webservices" class="fs-4 mt-5 mb-3 bg-light p-3 rounded">Web Services</h2>
+          <div class="table-responsive">
+            <table id="web-services" class="table table-striped table-hover table-bordered align-middle dataTable" role="grid">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Hostname</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Port</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Version</th>
+                  <th scope="col">HTTP-Title</th>
+                  <th scope="col">SSL Certificate</th>
+                  <th scope="col">URL</th>
                 </tr>
               </thead>
               <tbody>
                 <xsl:for-each select="/nmaprun/host">
                   <xsl:for-each select="ports/port[starts-with(service/@name, 'http') and state/@state='open' and @protocol='tcp']">
-
                     <tr>
-                      <!--<td><input name="select_all" value="1" type="checkbox"></input></td>-->
                       <td>
-                      <xsl:if test="count(../../hostnames/hostname) = 0">N/A</xsl:if>
-                      <xsl:if test="count(../../hostnames/hostname) > 0"><xsl:value-of select="../../hostnames/hostname/@name"/></xsl:if></td>
-                      <td><a>
-                      <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/></xsl:attribute><xsl:value-of select="../../address/@addr"/></a></td>
-                      
-                      <td><a>
-                      <!--PORT-->
-                      <xsl:attribute name="href">#port-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/>-<xsl:value-of select="@portid"/></xsl:attribute><xsl:value-of select="@portid"/></a></td>
-                      <!--Service-->
-                      <td><xsl:if test="count(service/@tunnel) > 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if><xsl:value-of select="service/@name"/></td>
-                      <td><xsl:value-of select="service/@product"/></td>
-                      <td><xsl:value-of select="service/@version"/></td>
-                      <!--Title-->
-                      <td><xsl:choose><xsl:when test="count(script[@id='http-title']/elem[@key='title']) > 0"><i><xsl:value-of select="script[@id='http-title']/elem[@key='title']"/></i></xsl:when><xsl:otherwise><xsl:if test="count(script[@id='http-title']/@output) > 0"><i><xsl:value-of select="script[@id='http-title']/@output"/></i></xsl:if></xsl:otherwise></xsl:choose></td>
-                      <!--SSL Cert-->
-                      <td>
-                        <xsl:if test="count(script/table[@key='subject']/elem[@key='commonName']) > 0">CN: <i><xsl:value-of select="script/table[@key='subject']/elem[@key='commonName']"/></i></xsl:if>
-                        <xsl:if test="count(script/table[@key='validity']/elem[@key='notAfter']) > 0"><br/>Expiry: <i><xsl:value-of select="script/table[@key='validity']/elem[@key='notAfter']"/></i></xsl:if>
-                        <xsl:if test="count(script/elem[@key='sig_algo']) > 0"><br/>SigAlgo: <i><xsl:value-of select="script/elem[@key='sig_algo']"/></i></xsl:if>
+                        <xsl:if test="count(../../hostnames/hostname) = 0">N/A</xsl:if>
+                        <xsl:if test="count(../../hostnames/hostname) &gt; 0">
+                          <xsl:value-of select="../../hostnames/hostname/@name"/>
+                        </xsl:if>
                       </td>
-                      <!--URL-->
+                      <td>
+                        <a>
+                          <xsl:attribute name="href">#onlinehosts-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/></xsl:attribute>
+                          <xsl:value-of select="../../address/@addr"/>
+                        </a>
+                      </td>
+                      <td>
+                        <xsl:value-of select="@portid"/>
+                      </td>
+                      <td>
+                        <xsl:if test="count(service/@tunnel) &gt; 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if>
+                        <xsl:if test="number(service/@conf) &gt; 5">
+                          <xsl:value-of select="service/@name"/>
+                        </xsl:if>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@product"/>
+                      </td>
+                      <td>
+                        <xsl:value-of select="service/@version"/>
+                      </td>
+                      <td>
+                        <xsl:choose>
+                          <xsl:when test="count(script[@id='http-title']/elem[@key='title']) &gt; 0">
+                            <i>
+                              <xsl:value-of select="script[@id='http-title']/elem[@key='title']"/>
+                            </i>
+                          </xsl:when>
+                          <xsl:otherwise>
+                            <xsl:if test="count(script[@id='http-title']/@output) &gt; 0">
+                              <i>
+                                <xsl:value-of select="script[@id='http-title']/@output"/>
+                              </i>
+                            </xsl:if>
+                          </xsl:otherwise>
+                        </xsl:choose>
+                      </td>
+                      <td>
+                        <table class="table table-sm table-borderless mb-0">
+                          <xsl:if test="script/table[@key='subject']/elem[@key='commonName'] or script/table[@key='subject']/elem[@key='organizationName']">
+                            <tr>
+                              <td>Subject</td>
+                              <td>
+                                <i>
+                                  <xsl:value-of select="script/table[@key='subject']/elem[@key='commonName']"/>
+                                  <xsl:if test="script/table[@key='subject']/elem[@key='organizationName']">
+                                    <xsl:text> – </xsl:text>
+                                    <xsl:value-of select="script/table[@key='subject']/elem[@key='organizationName']"/>
+                                  </xsl:if>
+                                </i>
+                              </td>
+                            </tr>
+                          </xsl:if>
+                          <xsl:if test="script/table[@key='issuer']/elem[@key='commonName'] or script/table[@key='issuer']/elem[@key='organizationName']">
+                            <tr>
+                              <td>Issuer</td>
+                              <td>
+                                <i>
+                                  <xsl:value-of select="script/table[@key='issuer']/elem[@key='commonName']"/>
+                                  <xsl:if test="script/table[@key='issuer']/elem[@key='organizationName']">
+                                    <xsl:text> – </xsl:text>
+                                    <xsl:value-of select="script/table[@key='issuer']/elem[@key='organizationName']"/>
+                                  </xsl:if>
+                                </i>
+                              </td>
+                            </tr>
+                          </xsl:if>
+                          <xsl:if test="script/table[@key='validity']/elem[@key='notAfter']">
+                            <tr>
+                              <td>Expiry</td>
+                              <td>
+                                <i>
+                                  <xsl:value-of select="script/table[@key='validity']/elem[@key='notAfter']"/>
+                                </i>
+                              </td>
+                            </tr>
+                          </xsl:if>
+                          <xsl:if test="script/elem[@key='sig_algo']">
+                            <tr>
+                              <td>SigAlgo</td>
+                              <td>
+                                <i>
+                                  <xsl:value-of select="script/elem[@key='sig_algo']"/>
+                                </i>
+                              </td>
+                            </tr>
+                          </xsl:if>
+                        </table>
+                      </td>
                       <xsl:choose>
-                        <!-- when SSL -->
-                        <xsl:when test="count(service/@tunnel) > 0 or service/@name = 'https' or service/@name = 'https-alt'">
-                              <td>
-                                <xsl:if test="count(../../hostnames/hostname) > 0"><a target="_blank" href="https://{../../hostnames/hostname/@name}:{@portid}"><xsl:value-of select="actionUrl"/>https://<xsl:value-of select="../../hostnames/hostname/@name"/>:<xsl:value-of select="@portid"/></a></xsl:if>
-                                <xsl:if test="count(../../hostnames/hostname) = 0"><a target="_blank" href="https://{../../address/@addr}:{@portid}"><xsl:value-of select="actionUrl"/>https://<xsl:value-of select="../../address/@addr"/>:<xsl:value-of select="@portid"/></a></xsl:if>
-                              </td>
+                        <xsl:when test="count(service/@tunnel) &gt; 0 or service/@name = 'https' or service/@name = 'https-alt'">
+                          <td>
+                            <xsl:if test="count(../../hostnames/hostname) &gt; 0">
+                              <a target="_blank" href="https://{../../hostnames/hostname/@name}:{@portid}">https://<xsl:value-of select="../../hostnames/hostname/@name"/>:<xsl:value-of select="@portid"/></a>
+                            </xsl:if>
+                            <xsl:if test="count(../../hostnames/hostname) = 0">
+                              <a target="_blank" href="https://{../../address/@addr}:{@portid}">https://<xsl:value-of select="../../address/@addr"/>:<xsl:value-of select="@portid"/></a>
+                            </xsl:if>
+                          </td>
                         </xsl:when>
-                        <!-- when not SSL -->
                         <xsl:otherwise>
-                              <td>
-                                <xsl:if test="count(../../hostnames/hostname) > 0"><a target="_blank" href="http://{../../hostnames/hostname/@name}:{@portid}"><xsl:value-of select="actionUrl"/>http://<xsl:value-of select="../../hostnames/hostname/@name"/>:<xsl:value-of select="@portid"/></a></xsl:if>
-                                <xsl:if test="count(../../hostnames/hostname) = 0"><a target="_blank" href="http://{../../address/@addr}:{@portid}"><xsl:value-of select="actionUrl"/>http://<xsl:value-of select="../../address/@addr"/>:<xsl:value-of select="@portid"/></a></xsl:if>
-                              </td>
+                          <td>
+                            <xsl:if test="count(../../hostnames/hostname) &gt; 0">
+                              <a target="_blank" href="http://{../../hostnames/hostname/@name}:{@portid}">http://<xsl:value-of select="../../hostnames/hostname/@name"/>:<xsl:value-of select="@portid"/></a>
+                            </xsl:if>
+                            <xsl:if test="count(../../hostnames/hostname) = 0">
+                              <a target="_blank" href="http://{../../address/@addr}:{@portid}">http://<xsl:value-of select="../../address/@addr"/>:<xsl:value-of select="@portid"/></a>
+                            </xsl:if>
+                          </td>
                         </xsl:otherwise>
-                    </xsl:choose>
-
+                      </xsl:choose>
                     </tr>
                   </xsl:for-each>
                 </xsl:for-each>
               </tbody>
             </table>
           </div>
-
-          <h2 id="onlinehosts" class="target">Online Hosts</h2>
-          <xsl:for-each select="/nmaprun/host[status/@state='up']">
-            <div class="panel panel-default">
-              <div class="panel-heading clickable" data-toggle="collapse">
-                  <xsl:attribute name="id">onlinehosts-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
-                  <xsl:attribute name="data-target">#<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
-                <h3 class="panel-title"><xsl:value-of select="address/@addr"/><xsl:if test="count(hostnames/hostname) > 0"> - <xsl:value-of select="hostnames/hostname/@name"/></xsl:if></h3>
-              </div>
-              <div class="panel-body collapse in">
-                <xsl:attribute name="id"><xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
-                <xsl:if test="count(hostnames/hostname) > 0">
-                  <h4>Hostnames</h4>
-                  <ul>
-                    <xsl:for-each select="hostnames/hostname">
-                      <li><xsl:value-of select="@name"/> (<xsl:value-of select="@type"/>)</li>
-                    </xsl:for-each>
-                  </ul>
-                </xsl:if>
-                <h4>Ports</h4>
-                <div class="table-responsive">
-                  <table class="table table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Port</th>
-                        <th>Protocol</th>
-                        <th>State<br/>Reason</th>
-                        <th>Service</th>
-                        <th>Product</th>
-                        <th>Version</th>
-                        <th>Extra Info</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <xsl:for-each select="ports/port">
-                        <xsl:choose>
-                          <xsl:when test="state/@state = 'open'">
-                            <tr class="success">
-                              <td title="Port"><xsl:attribute name="id">port-<xsl:value-of select="translate(../../address/@addr, '.', '-')"/>-<xsl:value-of select="@portid"/></xsl:attribute><xsl:value-of select="@portid"/></td>
-                              <td title="Protocol"><xsl:value-of select="@protocol"/></td>
-                              <td title="State / Reason"><xsl:value-of select="state/@state"/><br/><xsl:value-of select="state/@reason"/></td>
-                              <td title="Service"><xsl:if test="count(service/@tunnel) > 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if><xsl:value-of select="service/@name"/></td>
-                              <td title="Product"><xsl:value-of select="service/@product"/></td>
-                              <td title="Version"><xsl:value-of select="service/@version"/></td>
-                              <td title="Extra Info"><xsl:value-of select="service/@extrainfo"/></td>
-                            </tr>
+          
+          <hr class="my-4"/>
+          <h2 id="onlinehosts" class="fs-4 mt-5 mb-3 bg-light p-3 rounded">Online Hosts</h2>
+          <div class="accordion" id="accordionOnlineHosts">
+            <xsl:for-each select="/nmaprun/host[status/@state='up']">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <xsl:attribute name="id">heading-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse">
+                    <xsl:attribute name="id">onlinehosts-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                    <xsl:attribute name="data-bs-target">#collapse-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                    <xsl:attribute name="aria-controls">collapse-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                    <xsl:value-of select="address[@addrtype='ipv4']/@addr"/>
+                    <xsl:if test="address[@addrtype='mac']">
+                      <xsl:text> (</xsl:text>
+                      <xsl:value-of select="address[@addrtype='mac']/@addr"/>
+                      <xsl:if test="address[@addrtype='mac']/@vendor">
+                        <xsl:text> - </xsl:text>
+                        <xsl:value-of select="address[@addrtype='mac']/@vendor"/>
+                      </xsl:if>
+                      <xsl:text>)</xsl:text>
+                    </xsl:if>
+                    <xsl:if test="count(hostnames/hostname) &gt; 0">
+                      <xsl:text> - </xsl:text>
+                      <xsl:value-of select="hostnames/hostname/@name"/>
+                    </xsl:if>
+                  </button>
+                </h2>
+                <div>
+                  <xsl:attribute name="id">collapse-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                  <xsl:attribute name="class">accordion-collapse collapse</xsl:attribute>
+                  <xsl:attribute name="aria-labelledby">heading-<xsl:value-of select="translate(address/@addr, '.', '-')"/></xsl:attribute>
+                  <xsl:attribute name="data-bs-parent">#accordionOnlineHosts</xsl:attribute>
+                  <div class="accordion-body">
+                    <xsl:if test="count(hostnames/hostname) &gt; 0">
+                      <h4 class="fs-6">Hostnames</h4>
+                      <ul>
+                        <xsl:for-each select="hostnames/hostname">
+                          <li><xsl:value-of select="@name"/> (<xsl:value-of select="@type"/>)
+                          </li>
+                        </xsl:for-each>
+                      </ul>
+                    </xsl:if>
+                    <h4 class="fs-6">Ports</h4>
+                    <div class="table-responsive">
+                      <table class="table table-striped table-bordered align-middle">
+                        <thead>
+                          <tr class="table-light">
+                            <th>Port</th>
+                            <th>Protocol</th>
+                            <th>State</th>
+                            <th>Reason</th>
+                            <th>Service</th>
+                            <th>Product</th>
+                            <th>Version</th>
+                            <th>Extra Info</th>
+                            <th>CPE</th>
+                            <th>Scripts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <xsl:for-each select="ports/port">
                             <tr>
-                              <td colspan="7">
-                                <a><xsl:attribute name="href">https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="service/cpe"/></xsl:attribute><xsl:value-of select="service/cpe"/></a>
-                                <xsl:for-each select="script">
-                                  <h5><xsl:value-of select="@id"/></h5>
-                                  <pre style="white-space:pre-wrap; word-wrap:break-word;"><xsl:value-of select="@output"/></pre>
-                                </xsl:for-each>
+                              <td>
+                                <xsl:value-of select="@portid"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="@protocol"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="state/@state"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="state/@reason"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="service/@name"/>
+                                <xsl:if test="count(service/@tunnel) &gt; 0">
+                        (<xsl:value-of select="service/@tunnel"/>)
+                      </xsl:if>
+                              </td>
+                              <td>
+                                <xsl:value-of select="service/@product"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="service/@version"/>
+                              </td>
+                              <td>
+                                <xsl:value-of select="service/@extrainfo"/>
+                              </td>
+                              <td>
+                                <xsl:if test="count(service/cpe) &gt; 0">
+                                  <a>
+                                    <xsl:attribute name="href">
+                            https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="service/cpe"/>
+                          </xsl:attribute>
+                                    <xsl:value-of select="service/cpe"/>
+                                  </a>
+                                </xsl:if>
+                              </td>
+                              <td>
+                                <xsl:if test="count(script) &gt; 0">
+                                  <ul class="list-unstyled mb-0">
+                                    <xsl:for-each select="script">
+                                      <li>
+                                        <strong>
+                                          <xsl:value-of select="@id"/>
+                                        </strong>
+                                        <pre class="bg-light p-2 rounded">
+                                          <xsl:value-of select="@output"/>
+                                        </pre>
+                                      </li>
+                                    </xsl:for-each>
+                                  </ul>
+                                </xsl:if>
                               </td>
                             </tr>
-                          </xsl:when>
-                          <xsl:when test="state/@state = 'filtered'">
-                            <tr class="warning">
-                              <td><xsl:value-of select="@portid"/></td>
-                              <td><xsl:value-of select="@protocol"/></td>
-                              <td><xsl:value-of select="state/@state"/><br/><xsl:value-of select="state/@reason"/></td>
-                              <td><xsl:value-of select="service/@name"/></td>
-                              <td><xsl:value-of select="service/@product"/></td>
-                              <td><xsl:value-of select="service/@version"/></td>
-                              <td><xsl:value-of select="service/@extrainfo"/></td>
-                            </tr>
-                          </xsl:when>
-                          <xsl:when test="state/@state = 'closed'">
-                            <tr class="active">
-                              <td><xsl:value-of select="@portid"/></td>
-                              <td><xsl:value-of select="@protocol"/></td>
-                              <td><xsl:value-of select="state/@state"/><br/><xsl:value-of select="state/@reason"/></td>
-                              <td><xsl:value-of select="service/@name"/></td>
-                              <td><xsl:value-of select="service/@product"/></td>
-                              <td><xsl:value-of select="service/@version"/></td>
-                              <td><xsl:value-of select="service/@extrainfo"/></td>
-                            </tr>
-                          </xsl:when>
-                          <xsl:otherwise>
-                            <tr class="info">
-                              <td><xsl:value-of select="@portid"/></td>
-                              <td><xsl:value-of select="@protocol"/></td>
-                              <td><xsl:value-of select="state/@state"/><br/><xsl:value-of select="state/@reason"/></td>
-                              <td><xsl:value-of select="service/@name"/></td>
-                              <td><xsl:value-of select="service/@product"/></td>
-                              <td><xsl:value-of select="service/@version"/></td>
-                              <td><xsl:value-of select="service/@extrainfo"/></td>
-                            </tr>
-                          </xsl:otherwise>
-                        </xsl:choose>
+                          </xsl:for-each>
+                        </tbody>
+                      </table>
+                    </div>
+                    <xsl:if test="count(os/osmatch) &gt; 0">
+                      <h4 class="fs-6 mt-4">Operating System Detection</h4>
+                      <xsl:for-each select="os/osmatch">
+                        <h5>OS Details: <xsl:value-of select="@name"/> (<xsl:value-of select="@accuracy"/>%)</h5>
+                        <xsl:for-each select="osclass">
+                          <p><strong>Device Type:</strong><xsl:value-of select="@type"/><br/><strong>Running:</strong><xsl:value-of select="@vendor"/><xsl:value-of select="@osfamily"/><xsl:value-of select="@osgen"/>
+                  (<xsl:value-of select="@accuracy"/>%)<br/>
+                  <strong>OS CPE:</strong>
+                  <xsl:if test="count(cpe) &gt; 0"><a><xsl:attribute name="href">
+                        https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="cpe"/>
+                      </xsl:attribute><xsl:value-of select="cpe"/></a></xsl:if>
+                          </p>
+                        </xsl:for-each>
                       </xsl:for-each>
-                    </tbody>
-                  </table>
+                    </xsl:if>
+                  </div>
                 </div>
-                <xsl:if test="count(hostscript/script) > 0">
-                  <h4>Host Script</h4>
-                </xsl:if>
-                <xsl:for-each select="hostscript/script">
-                  <h5><xsl:value-of select="@id"/></h5>
-                  <pre style="white-space:pre-wrap; word-wrap:break-word;"><xsl:value-of select="@output"/></pre>
-                </xsl:for-each>
-                <xsl:if test="count(os/osmatch) > 0">
-                  <h4>OS Detection</h4>
-                  <xsl:for-each select="os/osmatch">
-                    <h5>OS details: <xsl:value-of select="@name"/> (<xsl:value-of select="@accuracy"/>%)</h5>
-                    <xsl:for-each select="osclass">
-                      Device type: <xsl:value-of select="@type"/><br/>
-                      Running: <xsl:value-of select="@vendor"/><xsl:text> </xsl:text><xsl:value-of select="@osfamily"/><xsl:text> </xsl:text><xsl:value-of select="@osgen"/> (<xsl:value-of select="@accuracy"/>%)<br/>
-                      OS CPE: <a><xsl:attribute name="href">https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="cpe"/></xsl:attribute><xsl:value-of select="cpe"/></a>
-                      <br/>
-                    </xsl:for-each>
-                    <br/>
-                  </xsl:for-each>
-                </xsl:if>
               </div>
-            </div>
-          </xsl:for-each>
+            </xsl:for-each>
+          </div>
         </div>
-        <footer class="footer">
+
+        <hr class="my-3"/>
+        <footer class="footer bg-light py-3">
           <div class="container">
-            <p class="text-muted">
-              This report was generated by or with the help of <a href="https://pentestfactory.com">Pentest Factory GmbH</a>.<br/>
-              If you have questions or problems do not hesitate <a href="mailto:team@pentestfactory.de">contacting us</a>.<br/><br/>
-              <span class="glyphicon glyphicon-heart" style="color: #de1d0b;"></span> Bootstrap Template by <a href="https://github.com/honze-net/nmap-bootstrap-xsl" target="_blank">Andreas Hontzia</a><br/>
-              <span class="glyphicon glyphicon-heart" style="color: #de1d0b;"></span> Tweaks and Extensions by <a href="https://github.com/l4rm4nd">LRVT</a>
-            </p>
+            <p class="text-muted mb-0">
+              This report was generated by or with the help of <a href="https://TODO.com" class="text-decoration-none">Company XYZ</a>.<br/>
+              If you have questions or problems, do not hesitate <a href="mailto:team@TODO.de" class="text-decoration-none">contacting us</a>. </p>
           </div>
         </footer>
+        <script>
+        function initializeDataTable(selector) {
+          const table = $(selector).DataTable({
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            order: [[0, 'desc']],
+            columnDefs: [
+              { targets: [0], orderable: true },
+              { targets: [1], type: 'ip-address' },
+            ],
+            dom: '&lt;"d-flex justify-content-between align-items-center mb-2"lfB&gt;rtip',
 
-        <script>
-          $(document).ready(function() {
-            $('#table-services').DataTable();
-            $("a[href^='#onlinehosts-']").click(function(event){     
-                event.preventDefault();
-                $('html,body').animate({scrollTop:($(this.hash).offset().top-60)}, 500);
+            stateSave: true,
+            extend: 'collection',
+            buttons: [
+              {
+                extend: 'copyHtml5',
+                text: 'Copy',
+                exportOptions: { orthogonal: 'export' },
+                className: 'btn btn-light'
+              },
+              {
+                extend: 'csvHtml5',
+                text: 'CSV',
+                fieldSeparator: ';',
+                exportOptions: { orthogonal: 'export' },
+                className: 'btn btn-light'
+              },
+              {
+                extend: 'excelHtml5',
+                text: 'Excel',
+                autoFilter: true,
+                exportOptions: { orthogonal: 'export' },
+                className: 'btn btn-light'
+              },
+              {
+                extend: 'pdfHtml5',
+                text: 'PDF',
+                orientation: 'landscape',
+                pageSize: 'LEGAL',
+                download: 'open',
+                exportOptions: {
+                },
+                className: 'btn btn-light'
+              },
+              {
+          text: 'JSON',
+                className: 'btn btn-light',
+          action: function (e, dt, node, config) {
+            const headers = dt.columns().header().toArray().map(h =&gt; $(h).text().trim());
+
+            const data = dt.rows({ search: 'applied' }).nodes().toArray().map(row =&gt; {
+              const obj = {};
+              $(row).find('td').each(function (i) {
+                obj[headers[i]] = $(this).text().trim();
+              });
+              return obj;
             });
-          });
-          $('#table-services').DataTable( {
-            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-            "order": [[ 0, 'desc' ]],
-            "columnDefs": [
-              { "targets": [0], "orderable": true },
-              { "targets": [1], "type": "ip-address" },
-            ],
-            dom:'lBfrtip', 
-            stateSave: true,
-            buttons: [
-                {
-                    extend: 'copyHtml5',
-                    exportOptions: { orthogonal: 'export' }
-                },
-                {
-                    extend: 'csvHtml5',
-                    exportOptions: { orthogonal: 'export' }
-                },
-                {
-                    extend: 'excelHtml5',
-                    exportOptions: { orthogonal: 'export' },
-                    autoFilter: true,
-                    title: '',
-                },
-                {
-                    extend: 'pdfHtml5',
-                    orientation: 'landscape',
-                    pageSize: 'LEGAL',
-                    download: 'open',
-                    exportOptions: {
-                      columns: [ 0,1,2,3,4,5,6,7,8 ]
-                    }
-                }
-            ],
-          });
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'table-export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+          }}]});
+        }
         </script>
-        <script>      
-          $(document).ready(function() {
-            $('#web-services').DataTable();
-          });
-          $('#web-services').DataTable( {
-            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-            "order": [[ 0, 'desc' ]],
-            "columnDefs": [
-              { "targets": [0], "orderable": true },
-              { "targets": [1], "type": "ip-address" },
-            ],
-            dom:'lBfrtip', 
-            stateSave: true,
-            buttons: [
-                {
-                    extend: 'copyHtml5',
-                    exportOptions: { orthogonal: 'export' }
-                },
-                {
-                    extend: 'csvHtml5',
-                    exportOptions: { orthogonal: 'export' }
-                },
-                {
-                    extend: 'excelHtml5',
-                    exportOptions: { orthogonal: 'export' },
-                    autoFilter: true,
-                    title: '',
-                },
-                {
-                    extend: 'pdfHtml5',
-                    orientation: 'landscape',
-                    pageSize: 'LEGAL',
-                    download: 'open',
-                    exportOptions: {
-                      columns: [ 0,1,2,3,4,5,6,7,8 ]
-                    }
-                }
-            ],
-          });
-        </script>      
         <script>
           $(document).ready(function() {
-            $('#table-overview').DataTable();
-          });
-          $('#table-overview').DataTable( {
-            "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
-            "columnDefs": [
-              { "targets": [1], "type": "ip-address" },
-            ],
+              initializeDataTable('#table-services');
+              initializeDataTable('#table-overview');
+              initializeDataTable('#web-services');
+              initializeDataTable('#service-inventory');
+
+
+              $("a[href^='#onlinehosts-']").click(function(event) {
+                  event.preventDefault();
+                  $('html,body').animate({
+                      scrollTop: ($(this.hash).offset().top - 60)
+                  }, 500);
+              });
           });
         </script>
+        <script>
+          document.addEventListener("DOMContentLoaded", function () {
+            var serviceCounts = {};
+
+            document.querySelectorAll("#serviceCounts .service").forEach(function (serviceElement) {
+              var serviceName = serviceElement.getAttribute("data-service");
+              if (serviceName) {
+                serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
+              }
+            });
+
+            var sortedServices = Object.entries(serviceCounts).sort((a, b) =&gt; b[1] - a[1]);
+
+            var labels = sortedServices.map(service =&gt; service[0]);
+            var data = sortedServices.map(service =&gt; service[1]);
+
+            var ctx = document.getElementById("servicePieChart").getContext("2d");
+            new Chart(ctx, {
+              type: "pie",
+              data: {
+                labels: labels,
+                datasets: [{
+                  data: data,
+                  backgroundColor: [
+                    "#4dc9f6", "#f67019", "#f53794", "#537bc4", "#acc236",
+                    "#166a8f", "#00a950", "#58595b", "#8549ba", "#ff6384"
+                  ],
+                }]
+              },
+              options: {
+                responsive: true,
+                legend: {
+                  position: "bottom"
+                },
+                title: {
+                  display: true,
+                  text: "Service Distribution Across Hosts"
+                }
+              }
+            });
+
+
+        var ledger = document.getElementById("topServicesLedger");
+        sortedServices.slice(0, 5).forEach(function ([service, count]) {
+          var listItem = document.createElement("li");
+          
+          listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+
+          listItem.innerHTML = `
+            <strong style="font-family: Arial, sans-serif; font-size: 16px;">${service}</strong>
+            <span class="badge bg-primary rounded-pill ms-auto" style="font-size: 14px;">${count}</span>
+          `;
+
+          ledger.appendChild(listItem);
+        });
+
+          });
+        </script>
+        <script>console.log("Made by Company XYZ")</script>
       </body>
     </html>
   </xsl:template>
