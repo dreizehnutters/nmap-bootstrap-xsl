@@ -67,7 +67,7 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
             </pre>
             <div class="d-flex gap-3 my-3">
               <p class="mb-0">
-                <b class="badge bg-info p-2"><xsl:value-of select="/nmaprun/runstats/hosts/@up"/> Hosts scanned</b>
+                <b class="badge bg-info p-2"><xsl:value-of select="/nmaprun/runstats/hosts/@total"/> Hosts scanned</b>
               </p>
             </div>
             <div class="progress">
