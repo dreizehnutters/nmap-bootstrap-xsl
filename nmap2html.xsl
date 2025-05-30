@@ -135,7 +135,7 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                     <xsl:for-each select="/nmaprun/host">
                       <tr>
                         <td>
-                          <span class="badge bg-danger">
+                          <span class="badge bg-warning">
                             <xsl:if test="status/@state='up'">
                               <xsl:attribute name="class">badge bg-success</xsl:attribute>
                             </xsl:if>
@@ -205,7 +205,6 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                   <th scope="col">Product</th>
                   <th scope="col">Version</th>
                   <th scope="col">Extra</th>
-                  <th scope="col">Tunnel</th>
                   <th scope="col">CPE</th>
                 </tr>
               </thead>
@@ -232,10 +231,14 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                         <xsl:value-of select="@protocol"/>
                       </td>
                       <td>
-                        <xsl:if test="count(service/@tunnel) &gt; 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if>
-                        <xsl:if test="number(service/@conf) &gt; 5">
-                          <xsl:value-of select="service/@name"/>
-                        </xsl:if>
+                        <xsl:choose>
+                          <xsl:when test="script[@id='ssl-cert']">
+                            ssl/<xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                          </xsl:when>
+                          <xsl:otherwise>
+                            <xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                          </xsl:otherwise>
+                        </xsl:choose>
                       </td>
                       <td>
                         <xsl:value-of select="service/@product"/>
@@ -245,9 +248,6 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                       </td>
                       <td>
                         <xsl:value-of select="service/@extrainfo"/>
-                      </td>
-                      <td>
-                        <xsl:value-of select="service/@tunnel"/>
                       </td>
                       <td>
                         <xsl:value-of select="service/cpe"/>
@@ -333,7 +333,7 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
               </thead>
               <tbody>
                 <xsl:for-each select="/nmaprun/host">
-                  <xsl:for-each select="ports/port[starts-with(service/@name, 'http') and state/@state='open' and @protocol='tcp']">
+                  <xsl:for-each select="ports/port[(@protocol='tcp') and (state/@state='open') and (starts-with(service/@name, 'http') or script[@id='ssl-cert'])]">
                     <tr>
                       <td>
                         <xsl:if test="count(../../hostnames/hostname) = 0">N/A</xsl:if>
@@ -351,10 +351,14 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                         <xsl:value-of select="@portid"/>
                       </td>
                       <td>
-                        <xsl:if test="count(service/@tunnel) &gt; 0"><xsl:value-of select="service/@tunnel"/>/</xsl:if>
-                        <xsl:if test="number(service/@conf) &gt; 5">
-                          <xsl:value-of select="service/@name"/>
-                        </xsl:if>
+                        <xsl:choose>
+                          <xsl:when test="script[@id='ssl-cert']">
+                            ssl/<xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                          </xsl:when>
+                          <xsl:otherwise>
+                            <xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                          </xsl:otherwise>
+                        </xsl:choose>
                       </td>
                       <td>
                         <xsl:value-of select="service/@product"/>
@@ -534,10 +538,14 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                                 <xsl:value-of select="state/@reason"/>
                               </td>
                               <td>
-                                <xsl:value-of select="service/@name"/>
-                                <xsl:if test="count(service/@tunnel) &gt; 0">
-                        (<xsl:value-of select="service/@tunnel"/>)
-                      </xsl:if>
+                                <xsl:choose>
+                                  <xsl:when test="script[@id='ssl-cert']">
+                                    ssl/<xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                                  </xsl:when>
+                                  <xsl:otherwise>
+                                    <xsl:if test="number(service/@conf) &gt; 5"><xsl:value-of select="service/@name"/></xsl:if>
+                                  </xsl:otherwise>
+                                </xsl:choose>
                               </td>
                               <td>
                                 <xsl:value-of select="service/@product"/>

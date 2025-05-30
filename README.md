@@ -42,11 +42,11 @@ A detailed accordion-style breakdown for each reachable device (`up` state). Thi
 
 1. Download the XSL stylesheet:
    ```bash
-   wget https://raw.githubusercontent.com/dreizehnutters/nmap-bootstrap-xsl/main/nmap-bootstrap.xsl
+   wget https://raw.githubusercontent.com/dreizehnutters/NmapView/main/nmap2html.xsl
    ```
 2. Convert your Nmap XML file to HTML:
    ```bash
-   xsltproc -o report.html nmap-bootstrap.xsl your_scan.xml
+   xsltproc -o report.html nmap2html.xsl your_scan.xml
    ```
 
 
