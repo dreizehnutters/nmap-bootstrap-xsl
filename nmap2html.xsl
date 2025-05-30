@@ -19,7 +19,7 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"/>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"/>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.bundle.min.js" integrity="sha384-mZ3q69BYmd4GxHp59G3RrsaFdWDxVSoqd7oVYuWRm2qiXrduT63lQtlhdD9lKbm3" crossorigin="anonymous"/>
-        <title>Company XYZ | Nmap Results</title>
+        <title>NmapView Report - Interactive Nmap Scan Summary</title>
       </head>
       <body>
         <nav id="mainNavbar" class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
@@ -41,9 +41,19 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                 </li>
               </ul>
               <ul class="navbar-nav ms-auto">
+                <li class="nav-link" id="check-version">
+                </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="https://TODO.com/pentest">
-                    <img src="data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7" alt="Company XYZ" style="max-height: 40px; width: auto;"/>
+                  <a class="nav-link" href="https://github.com/dreizehnutters/NmapView">
+                    <svg height="100" width="100" viewbox="0 0 100 100" style="max-height: 42px; width: auto;">
+                      <line x1="50" x2="50" y2="33" y1="0" stroke-width="3" stroke="#808080" />
+                      <line x1="25" x2="25" y2="66" y1="33" stroke-width="3" stroke="#808080" />
+                      <line x1="75" x2="75" y2="66" y1="33" stroke-width="3" stroke="#808080" />
+                      <line x1="2" x2="2" y2="99" y1="66" stroke-width="3" stroke="#808080" />
+                      <line x1="47" x2="47" y2="99" y1="66" stroke-width="3" stroke="#808080" />
+                      <line x1="53" x2="53" y2="99" y1="66" stroke-width="3" stroke="#808080" />
+                      <line x1="98" x2="98" y2="99" y1="66" stroke-width="3" stroke="#808080" />
+                    </svg>
                   </a>
                 </li>
               </ul>
@@ -206,6 +216,7 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                   <th scope="col">Version</th>
                   <th scope="col">Extra</th>
                   <th scope="col">CPE</th>
+                  <th scope="col">Exploits</th>
                 </tr>
               </thead>
               <tbody>
@@ -251,6 +262,44 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                       </td>
                       <td>
                         <xsl:value-of select="service/cpe"/>
+                      </td>
+                      <td>
+                        <div class="vulners-chunks" data-raw="{.//script[@id='vulners']}"></div>
+                        <script type="text/javascript">
+                          <![CDATA[
+                            (function() {
+                              var container = document.currentScript.previousElementSibling;
+                              if (!container) return;
+                              var raw = container.getAttribute('data-raw') || '';
+                              if (!raw.trim()) {
+                                console.warn("No vulners data found for this port.");
+                                return;
+                              }
+                              var cleaned = raw.replace(/\r\n/g, '\n').trim();
+                              var chunks = cleaned.split(/\n\s*\n/).slice(0, 5);
+                              var links = [];
+                              for (var i = 0; i < chunks.length; i++) {
+                                var lines = chunks[i].trim().split(/\n+/).map(function(line) {
+                                  return line.trim();
+                                });
+
+                                if (lines.length >= 4) {
+                                  var id = lines[0];
+                                  var type = lines[2];
+                                  var score = lines[3];
+                                  if (id && type) {
+                                    var url = 'https://vulners.com/' + type + '/' + id;
+                                    var label = 'CVSS: ' + score;
+                                    links.push('<div style="margin-bottom: 0.5em;"><strong>' + label + '</strong> - <a href="' + url + '" target="_blank">' + id + '</a></div>');
+                                  }
+                                }
+                              }
+                              container.innerHTML = links.length
+                                ? links.join('')
+                                : '<em style="color: #999;">No valid Vulners links found</em>';
+                            })();
+                          ]]>
+                        </script>
                       </td>
                     </tr>
                   </xsl:for-each>
@@ -589,15 +638,27 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                     </div>
                     <xsl:if test="count(os/osmatch) &gt; 0">
                       <h4 class="fs-6 mt-4">Operating System Detection</h4>
-                      <xsl:for-each select="os/osmatch">
-                        <h5>OS Details: <xsl:value-of select="@name"/> (<xsl:value-of select="@accuracy"/>%)</h5>
+                      <xsl:for-each select="os/osmatch[not(@accuracy &lt; ../osmatch/@accuracy)]">
+                        <h5>
+                          OS Details:
+                          <xsl:value-of select="@name"/>
+                          (<xsl:value-of select="@accuracy"/>%)
+                        </h5>
                         <xsl:for-each select="osclass">
-                          <p><strong>Device Type:</strong><xsl:value-of select="@type"/><br/><strong>Running:</strong><xsl:value-of select="@vendor"/><xsl:value-of select="@osfamily"/><xsl:value-of select="@osgen"/>
-                  (<xsl:value-of select="@accuracy"/>%)<br/>
-                  <strong>OS CPE:</strong>
-                  <xsl:if test="count(cpe) &gt; 0"><a><xsl:attribute name="href">
-                        https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="cpe"/>
-                      </xsl:attribute><xsl:value-of select="cpe"/></a></xsl:if>
+                          <p>
+                            <strong>Device Type:</strong> <xsl:value-of select="@type"/><br/>
+                            <strong>Running:</strong>
+                            <xsl:value-of select="@vendor"/> <xsl:value-of select="@osfamily"/> <xsl:value-of select="@osgen"/>
+                            (<xsl:value-of select="@accuracy"/>%)<br/>
+                            <strong>OS CPE:</strong>
+                            <xsl:if test="count(cpe) &gt; 0">
+                              <a>
+                                <xsl:attribute name="href">
+                                  https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;cves=on&amp;cpe_version=<xsl:value-of select="cpe"/>
+                                </xsl:attribute>
+                                <xsl:value-of select="cpe"/>
+                              </a>
+                            </xsl:if>
                           </p>
                         </xsl:for-each>
                       </xsl:for-each>
@@ -613,24 +674,12 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
         <footer class="footer bg-light py-3">
           <div class="container">
             <p class="text-muted mb-0">
-              This report was generated by or with the help of <a href="https://TODO.com" class="text-decoration-none">Company XYZ</a>.<br/>
-              If you have questions or problems, do not hesitate <a href="mailto:team@TODO.de" class="text-decoration-none">contacting us</a>. </p>
+              If you have questions or problems, do not hesitate <a href="https://github.com/dreizehnutters/nmap2csv/issues" class="text-decoration-none">raise an issue</a>. </p>
           </div>
         </footer>
         <script>
-        function initializeDataTable(selector) {
-          const table = $(selector).DataTable({
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            order: [[0, 'desc']],
-            columnDefs: [
-              { targets: [0], orderable: true },
-              { targets: [1], type: 'ip-address' },
-            ],
-            dom: '&lt;"d-flex justify-content-between align-items-center mb-2"lfB&gt;rtip',
-
-            stateSave: true,
-            extend: 'collection',
-            buttons: [
+          function initializeDataTable(selector) {
+            const buttons = [
               {
                 extend: 'copyHtml5',
                 text: 'Copy',
@@ -657,34 +706,59 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
                 orientation: 'landscape',
                 pageSize: 'LEGAL',
                 download: 'open',
-                exportOptions: {
-                },
+                exportOptions: {},
                 className: 'btn btn-light'
               },
               {
-          text: 'JSON',
+                text: 'JSON',
                 className: 'btn btn-light',
-          action: function (e, dt, node, config) {
-            const headers = dt.columns().header().toArray().map(h =&gt; $(h).text().trim());
+                action: function (e, dt, node, config) {
+                  const headers = dt.columns().header().toArray().map(h => $(h).text().trim());
 
-            const data = dt.rows({ search: 'applied' }).nodes().toArray().map(row =&gt; {
-              const obj = {};
-              $(row).find('td').each(function (i) {
-                obj[headers[i]] = $(this).text().trim();
+                  const data = dt.rows({ search: 'applied' }).nodes().toArray().map(row => {
+                    const obj = {};
+                    $(row).find('td').each(function (i) {
+                      obj[headers[i]] = $(this).text().trim();
+                    });
+                    return obj;
+                  });
+
+                  const json = JSON.stringify(data, null, 2);
+                  const blob = new Blob([json], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'table-export.json';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }
+            ];
+
+            if (selector === '#web-services') {
+              buttons.push({
+                extend: 'copyHtml5',
+                text: 'Copy URLs',
+                header: false,
+                title: '',
+                exportOptions: {  columns: [-1], orthogonal: 'export' },
+                className: 'btn btn-light'
               });
-              return obj;
-            });
+            }
 
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'table-export.json';
-            a.click();
-            URL.revokeObjectURL(url);
-          }}]});
-        }
+            $(selector).DataTable({
+              lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+              order: [[0, 'desc']],
+              columnDefs: [
+                { targets: [0], orderable: true },
+                { targets: [1], type: 'ip-address' },
+              ],
+              dom: '&lt;"d-flex justify-content-between align-items-center mb-2"lfB&gt;rtip',
+              stateSave: true,
+              buttons: buttons
+            });
+          }
+
         </script>
         <script>
           $(document).ready(function() {
@@ -748,11 +822,11 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
         sortedServices.slice(0, 5).forEach(function ([service, count]) {
           var listItem = document.createElement("li");
           
-          listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+          listItem.className = "list-group-item d-flex justify-content-between align-items-center px-3 mb-2";
 
           listItem.innerHTML = `
             <strong style="font-family: Arial, sans-serif; font-size: 16px;">${service}</strong>
-            <span class="badge bg-primary rounded-pill ms-auto" style="font-size: 14px;">${count}</span>
+            <span class="badge bg-primary rounded-pill" style="font-size: 14px; margin-left: 10rem">${count}</span>
           `;
 
           ledger.appendChild(listItem);
@@ -760,7 +834,34 @@ Andreas Hontzia (@honze_net) & LRVT (@l4rm4nd) & Fabian Kopp (@dreizehnutters)
 
           });
         </script>
-        <script>console.log("Made by Company XYZ")</script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            const commitElement = document.getElementById('check-version');
+
+            fetch('https://api.github.com/repos/dreizehnutters/NmapView/commits?per_page=1')
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                return response.json();
+              })
+              .then(data => {
+                if (data.length > 0) {
+                  const fullSha = data[0].sha;
+                  const shortSha = fullSha.substring(0, 7);
+                  commitElement.innerHTML = `<a href="https://github.com/dreizehnutters/NmapView">Template Version: ${shortSha}</a>`;
+                } else {
+                  commitElement.textContent = '<a href="https://github.com/dreizehnutters/NmapView">Template Version: ???</a>';
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching the latest commit:', error);
+                commitElement.textContent = 'Error loading latest commit.';
+              });
+          });
+        </script>
+
+        <script>console.log("Made by dreizehnutters")</script>
       </body>
     </html>
   </xsl:template>
